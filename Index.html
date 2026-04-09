@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eternal Realms - Free RPG Game</title>
+    <meta name="description" content="Free browser RPG with multiplayer, guilds, battle pass, and seasonal events. No download required!">
+    <meta name="keywords" content="free rpg game, browser rpg, multiplayer game, online rpg">
+    
+    <!-- Open Graph for social sharing -->
+    <meta property="og:title" content="Eternal Realms - Free Browser RPG">
+    <meta property="og:description" content="Play the ultimate free browser RPG. Join guilds, battle monsters, and compete in seasonal events!">
+    <meta property="og:type" content="website">
+    
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--gold:#ffd700;--premium:#ff006e;--dark:#1a1a2e;--darker:#0f0f1a;--panel:rgba(26,26,46,.95)}
+        body{font-family:system-ui,-apple-system,sans-serif;background:var(--darker);color:#e0e0e0;min-height:100vh}
+        .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center;z-index:1000;background:var(--darker)}
+        .login-screen.hidden{display:none}
+        .character-creation{background:var(--panel);border:3px solid var(--gold);border-radius:20px;padding:40px;max-width:900px;width:90%;margin:20px;box-shadow:0 0 50px rgba(255,215,0,.2)}
+        .game-title{font-size:3rem;text-align:center;background:linear-gradient(135deg,var(--gold),var(--premium));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:10px;font-weight:900}
+        .season-banner{background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(255,0,110,.2));border:2px solid #ff6b35;border-radius:15px;padding:15px;margin-bottom:20px;text-align:center;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{box-shadow:0 0 20px rgba(255,107,53,.3)}50%{box-shadow:0 0 40px rgba(255,107,53,.5)}}
+        .season-title{color:#ff6b35;font-size:1.3rem;font-weight:700;margin-bottom:5px}
+        .premium-banner{background:linear-gradient(135deg,rgba(255,0,110,.2),rgba(255,215,0,.2));border:2px solid var(--premium);border-radius:15px;padding:20px;margin-bottom:30px;text-align:center}
+        .premium-features{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;font-size:.9rem}
+        .input-group{margin-bottom:20px}
+        .input-group label{color:var(--gold);font-weight:600;display:block;margin-bottom:8px}
+        .input-group input{width:100%;padding:12px 20px;background:rgba(0,0,0,.3);border:2px solid #444;border-radius:10px;color:#fff;font-size:1rem;outline:none}
+        .input-group input:focus{border-color:var(--gold)}
+        .class-selection{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px}
+        .class-card{background:rgba(0,0,0,.3);border:2px solid #444;border-radius:15px;padding:20px;text-align:center;cursor:pointer;transition:all .3s;position:relative}
+        .class-card:hover{transform:translateY(-5px);border-color:var(--gold)}
+        .class-card.selected{border-color:var(--gold);background:rgba(255,215,0,.1);box-shadow:0 0 30px rgba(255,215,0,.2)}
+        .class-card.seasonal{border-color:#ff6b35}
+        .class-icon{font-size:2.5rem;margin-bottom:10px}
+        .class-name{color:var(--gold);font-weight:700}
+        .start-btn{width:100%;padding:18px;margin-top:20px;background:linear-gradient(135deg,var(--gold),#b8860b);border:none;border-radius:12px;color:var(--darker);font-weight:900;font-size:1.3rem;cursor:pointer;transition:all .3s}
+        .start-btn:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(255,215,0,.4)}
+        
+        .game-container{display:none;position:relative;z-index:1;height:100vh;grid-template-columns:280px 1fr 300px;grid-template-rows:70px 1fr;gap:10px;padding:10px}
+        .game-container.active{display:grid}
+        
+        .game-header{grid-column:1/-1;background:var(--panel);border:2px solid var(--gold);border-radius:15px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;flex-wrap:wrap;gap:10px}
+        .header-nav{display:flex;gap:15px}
+        .nav-btn{background:none;border:none;color:#888;padding:8px 15px;border-radius:20px;cursor:pointer;transition:all .3s;font-size:.9rem}
+        .nav-btn:hover,.nav-btn.active{color:var(--gold);background:rgba(255,215,0,.1)}
+        .nav-btn.seasonal{color:#ff6b35}
+        
+        .currency-display{display:flex;gap:10px}
+        .currency-pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-weight:600;cursor:pointer;transition:all .3s;font-size:.85rem}
+        .currency-pill.gold{background:rgba(255,215,0,.1);border:1px solid var(--gold);color:var(--gold)}
+        .currency-pill.gems{background:rgba(255,0,110,.1);border:1px solid var(--premium);color:var(--premium)}
+        
+        .panel{background:var(--panel);border:2px solid #333;border-radius:15px;overflow:hidden;display:flex;flex-direction:column}
+        .panel-header{background:rgba(0,0,0,.3);padding:12px 15px;border-bottom:2px solid #333;color:var(--gold);font-weight:700;display:flex;justify-content:space-between;align-items:center}
+        .panel-content{flex:1;overflow-y:auto;padding:12px}
+        
+        .character-avatar{width:100%;height:140px;background:linear-gradient(135deg,rgba(0,0,0,.3),rgba(255,215,0,.05));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:12px;border:2px solid var(--gold)}
+        .char-info{text-align:center;margin-bottom:12px}
+        .char-name{color:var(--gold);font-size:1.1rem;font-weight:700}
+        .char-class{color:#888;font-size:.85rem}
+        
+        .bar-container{margin-bottom:10px}
+        .bar-label{display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:3px}
+        .bar-track{height:18px;background:rgba(0,0,0,.3);border-radius:9px;overflow:hidden}
+        .bar-fill{height:100%;transition:width .3s}
+        .hp-fill{background:linear-gradient(90deg,#8b0000,#dc143c)}
+        .mana-fill{background:linear-gradient(90deg,#00008b,#4169e1)}
+        .xp-fill{background:linear-gradient(90deg,#9932cc,var(--premium))}
+        
+        .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+        .stat-box{background:rgba(0,0,0,.2);padding:8px;border-radius:8px;text-align:center}
+        .stat-value{color:var(--gold);font-weight:700;font-size:1.1rem}
+        .stat-label{font-size:.75rem;color:#666}
+        
+        .main-content{display:flex;flex-direction:column;gap:10px}
+        .content-section{display:none;flex:1;background:var(--panel);border:2px solid #333;border-radius:15px;overflow:hidden}
+        .content-section.active{display:flex;flex-direction:column}
+        
+        .scene-display{flex:1;position:relative;padding:20px}
+        .scene-title{color:var(--gold);font-size:1.8rem;margin-bottom:15px;font-weight:700}
+        .scene-desc{font-size:1rem;line-height:1.6;color:#ccc;margin-bottom:20px}
+        .scene-actions{display:flex;gap:10px;flex-wrap:wrap}
+        .action-btn{padding:12px 20px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(184,134,11,.1));border:2px solid var(--gold);border-radius:10px;color:var(--gold);cursor:pointer;transition:all .3s;font-size:.9rem}
+        .action-btn:hover{transform:translateY(-2px);box-shadow:0 5px 20px rgba(255,215,0,.2)}
+        
+        .combat-area{display:none;position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.95);z-index:100;padding:20px;flex-direction:column}
+        .combat-area.active{display:flex}
+        .combat-arena{flex:1;display:flex;justify-content:space-around;align-items:center}
+        .combatant{text-align:center}
+        .combatant-sprite{width:100px;height:100px;background:rgba(255,255,255,.05);border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:3rem;margin-bottom:10px;border:3px solid}
+        .combatant.player .combatant-sprite{border-color:var(--gold)}
+        .combatant.enemy .combatant-sprite{border-color:#8b0000}
+        .combatant-hp{width:120px;height:18px;background:rgba(0,0,0,.5);border-radius:9px;overflow:hidden;border:2px solid #444;margin:0 auto}
+        .combatant-hp-fill{height:100%;transition:width .5s}
+        .player-hp-fill{background:linear-gradient(90deg,#228b22,#32cd32)}
+        .enemy-hp-fill{background:linear-gradient(90deg,#8b0000,#dc143c)}
+        .combat-controls{display:flex;justify-content:center;gap:10px;margin-top:15px;flex-wrap:wrap}
+        .combat-btn{padding:12px 25px;border:none;border-radius:10px;font-weight:700;cursor:pointer;transition:all .3s;font-size:.9rem}
+        .combat-log{background:rgba(0,0,0,.5);border-radius:10px;padding:12px;height:100px;overflow-y:auto;margin-top:15px;font-size:.85rem}
+        
+        .bp-container{background:linear-gradient(135deg,rgba(255,107,53,.1),rgba(255,0,110,.1));border:2px solid #ff6b35;border-radius:15px;padding:15px;margin-bottom:15px}
+        .bp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+        .bp-title{color:#ff6b35;font-size:1.2rem;font-weight:700}
+        .bp-track{height:12px;background:rgba(0,0,0,.3);border-radius:6px;overflow:hidden;margin-bottom:8px}
+        .bp-fill{height:100%;background:linear-gradient(90deg,#ff6b35,var(--premium));transition:width .3s}
+        .bp-rewards{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px}
+        .bp-reward{min-width:70px;background:rgba(0,0,0,.3);border:2px solid #444;border-radius:10px;padding:10px;text-align:center;cursor:pointer;transition:all .3s}
+        .bp-reward.current{border-color:#ff6b35;box-shadow:0 0 20px rgba(255,107,53,.3)}
+        
+        .guild-hall{padding:20px;overflow-y:auto}
+        .guild-stat-card{background:rgba(0,0,0,.3);border-radius:15px;padding:20px;text-align:center}
+        .guild-stat-value{font-size:2rem;color:var(--gold);font-weight:700}
+        .guild-stat-label{color:#888;font-size:.9rem}
+        .guild-actions{display:flex;gap:15px;margin:20px 0}
+        .guild-action-btn{flex:1;padding:15px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(184,134,11,.1));border:2px solid var(--gold);border-radius:12px;color:var(--gold);cursor:pointer;transition:all .3s;font-weight:600}
+        .guild-action-btn:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,215,0,.2)}
+        
+        .inventory-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+        .inv-slot{aspect-ratio:1;background:rgba(0,0,0,.3);border:2px solid #444;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;transition:all .3s;position:relative}
+        .inv-slot:hover{border-color:var(--gold)}
+        .item-count{position:absolute;bottom:2px;right:5px;font-size:.7rem;color:var(--gold);font-weight:700}
+        
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.9);backdrop-filter:blur(10px);display:none;justify-content:center;align-items:center;z-index:2000;padding:20px}
+        .modal-overlay.active{display:flex}
+        .modal{background:var(--panel);border:3px solid var(--gold);border-radius:20px;width:100%;max-width:800px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+        .modal-header{padding:20px;background:linear-gradient(135deg,rgba(255,215,0,.1),rgba(184,134,11,.1));border-bottom:2px solid var(--gold);display:flex;justify-content:space-between;align-items:center}
+        .modal-title{color:var(--gold);font-size:1.8rem;font-weight:700}
+        .close-btn{background:none;border:none;color:#fff;font-size:1.5rem;cursor:pointer;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .3s}
+        .close-btn:hover{background:rgba(255,255,255,.1)}
+        .modal-content{flex:1;overflow-y:auto;padding:20px}
+        
+        .gem-packages{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:15px;padding:20px}
+        .gem-package{background:linear-gradient(135deg,rgba(255,0,110,.1),rgba(0,0,0,.3));border:2px solid var(--premium);border-radius:15px;padding:20px;text-align:center;cursor:pointer;transition:all .3s}
+        .gem-package:hover{transform:translateY(-5px);box-shadow:0 15px 40px rgba(255,0,110,.3)}
+        .gem-amount{font-size:2.5rem;margin-bottom:8px}
+        .gem-bonus{color:#228b22;font-size:.85rem;margin-bottom:10px}
+        .gem-price{color:var(--gold);font-size:1.3rem;font-weight:700}
+        
+        .toast-container{position:fixed;top:80px;right:20px;z-index:3000;display:flex;flex-direction:column;gap:10px}
+        .toast{background:var(--panel);border-left:4px solid var(--gold);border-radius:10px;padding:15px 20px;color:#fff;animation:slideIn .3s ease;min-width:280px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+        @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+        
+        @media(max-width:1024px){.game-container.active{grid-template-columns:1fr;grid-template-rows:auto}.panel{max-height:250px}}
+    </style>
+</head>
+body>
+    <div class="login-screen" id="loginScreen">
+        <div class="character-creation">
+            <h1 class="game-title">⚔️ Eternal Realms ⚔️</h1>
+            <div class="season-banner">
+                <div class="season-title">🔥 Season 1: Infernal Rising</div>
+                <div id="seasonTimer">14 days remaining</div>
+            </div>
+            <div class="premium-banner">
+                <div class="premium-features">
+                    <span>⚔️ 4 Classes</span>
+                    <span>👑 VIP System</span>
+                    <span>⚔️ Guilds</span>
+                    <span> Battle Pass</span>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Hero Name</label>
+                <input type="text" id="heroName" placeholder="Enter your name..." maxlength="20">
+            </div>
+            <div class="input-group">
+                <label>Choose Class</label>
+                <div class="class-selection">
+                    <div class="class-card" data-class="warrior" onclick="selectClass(this)">
+                        <div class="class-icon">⚔️</div>
+                        <div class="class-name">Warrior</div>
+                    </div>
+                    <div class="class-card" data-class="mage" onclick="selectClass(this)">
+                        <div class="class-icon">🔮</div>
+                        <div class="class-name">Mage</div>
+                    </div>
+                    <div class="class-card" data-class="rogue" onclick="selectClass(this)">
+                        <div class="class-icon">🗡️</div>
+                        <div class="class-name">Rogue</div>
+                    </div>
+                    <div class="class-card seasonal" data-class="pyromancer" onclick="selectClass(this)">
+                        <div class="class-icon">🔥</div>
+                        <div class="class-name">Pyromancer</div>
+                    </div>
+                </div>
+            </div>
+            <button class="start-btn" onclick="startGame()">Begin Adventure</button>
+        </div>
+    </div>
+
+    <div class="game-container" id="gameContainer">
+        <div class="game-header">
+            <div class="header-nav">
+                <button class="nav-btn active" onclick="showSection('adventure')">🗺️ Adventure</button>
+                <button class="nav-btn" onclick="showSection('guild')">⚔️ Guild</button>
+                <button class="nav-btn seasonal" onclick="showSection('season')">🔥 Season</button>
+            </div>
+            <div class="currency-display">
+                <div class="currency-pill gold" onclick="openShop()">💰 <span id="headerGold">100</span></div>
+                <div class="currency-pill gems" onclick="openShop()">💎 <span id="headerGems">50</span></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">🎭 Hero <span id="playerLevel" style="color:var(--premium)">Lvl 1</span></div>
+            <div class="panel-content">
+                <div class="character-avatar" id="charAvatar">⚔️</div>
+                <div class="char-info">
+                    <div class="char-name" id="charName">Hero</div>
+                    <div class="char-class" id="charClass">Warrior</div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>XP</span><span id="xpText">0/100</span></div>
+                    <div class="bar-track"><div class="bar-fill xp-fill" id="xpBar" style="width:0%"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>❤️ HP</span><span id="hpText">100/100</span></div>
+                    <div class="bar-track"><div class="bar-fill hp-fill" id="hpBar" style="width:100%"></div></div>
+                </div>
+                <div class="bar-container">
+                    <div class="bar-label"><span>💙 Mana</span><span id="manaText">50/50</span></div>
+                    <div class="bar-track"><div class="bar-fill mana-fill" id="manaBar" style="width:100%"></div></div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-box"><div class="stat-value" id="statStr">10</div><div class="stat-label">STR</div></div>
+                    <div class="stat-box"><div class="stat-value" id="statDef">8</div><div class="stat-label">DEF</div></div>
+                    <div class="stat-box"><div class="stat-value" id="statMag">5</div><div class="stat-label">MAG</div></div>
+                    <div class="stat-box"><div class="stat-value" id="statSpd">7</div><div class="stat-label">SPD</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-section active" id="adventureSection">
+                <div class="scene-display">
+                    <h2 class="scene-title" id="sceneTitle">Village of Dawn</h2>
+                    <p class="scene-desc">The village bustles with activity. Choose your path wisely, adventurer.</p>
+                    <div class="scene-actions">
+                        <button class="action-btn" onclick="startCombat('goblin')">⚔️ Fight Goblin</button>
+                        <button class="action-btn" onclick="startCombat('wolf')">🐺 Fight Wolf</button>
+                        <button class="action-btn" onclick="startCombat('skeleton')">💀 Skeleton</button>
+                    </div>
+                    <div class="combat-area" id="combatArea">
+                        <div class="combat-arena">
+                            <div class="combatant player">
+                                <div class="combatant-sprite" id="playerSprite">⚔️</div>
+                                <div id="combatPlayerName">Hero</div>
+                                <div class="combatant-hp"><div class="combatant-hp-fill player-hp-fill" id="combatPlayerHP" style="width:100%"></div></div>
+                            </div>
+                            <div style="font-size:2rem">VS</div>
+                            <div class="combatant enemy">
+                                <div class="combatant-sprite" id="enemySprite">👹</div>
+                                <div id="enemyName">Goblin</div>
+                                <div class="combatant-hp"><div class="combatant-hp-fill enemy-hp-fill" id="enemyHP" style="width:100%"></div></div>
+                            </div>
+                        </div>
+                        <div class="combat-controls">
+                            <button class="combat-btn" style="background:linear-gradient(90deg,#8b0000,#dc143c);color:#fff" onclick="combatAttack()">⚔️ Attack</button>
+                            <button class="combat-btn" style="background:linear-gradient(90deg,#4b0082,#9932cc);color:#fff" onclick="combatMagic()">🔮 Spell</button>
+                            <button class="combat-btn" style="background:linear-gradient(90deg,#228b22,#32cd32);color:#fff" onclick="combatHeal()">🧪 Heal</button>
+                        </div>
+                        <div class="combat-log" id="combatLog"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section" id="guildSection">
+                <div class="guild-hall">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px">
+                        <div class="guild-stat-card"><div class="guild-stat-value">5</div><div class="guild-stat-label">Guild Level</div></div>
+                        <div class="guild-stat-card"><div class="guild-stat-value">12</div><div class="guild-stat-label">Members</div></div>
+                        <div class="guild-stat-card"><div class="guild-stat-value">2.4k</div><div class="guild-stat-label">Power</div></div>
+                    </div>
+                    <div class="guild-actions">
+                        <button class="guild-action-btn" onclick="donate()">💰 Donate</button>
+                        <button class="guild-action-btn" onclick="raid()">⚔️ Raid</button>
+                        <button class="guild-action-btn" onclick="shop()">🛒 Shop</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-section" id="seasonSection">
+                <div style="padding:30px;text-align:center">
+                    <div style="font-size:3rem;margin-bottom:20px">🔥</div>
+                    <h2 style="color:#ff6b35;font-size:2rem;margin-bottom:15px">Infernal Rising</h2>
+                    <p style="color:#888;margin-bottom:30px">Season 1 • Exclusive rewards await!</p>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px">
+                        <div style="background:rgba(0,0,0,.3);border:2px solid #ff6b35;border-radius:15px;padding:20px">
+                            <div style="font-size:3rem;margin-bottom:10px">🔥</div>
+                            <div style="color:#ff6b35;font-weight:700">Pyromancer</div>
+                            <div style="font-size:.9rem;color:#888">Exclusive Class</div>
+                        </div>
+                        <div style="background:rgba(0,0,0,.3);border:2px solid #ff6b35;border-radius:15px;padding:20px">
+                            <div style="font-size:3rem;margin-bottom:10px">🐉</div>
+                            <div style="color:#ff6b35;font-weight:700">Infernal Drake</div>
+                            <div style="font-size:.9rem;color:#888">Legendary Mount</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px">
+            <div class="bp-container">
+                <div class="bp-header"><div class="bp-title">🔥 Battle Pass</div><div style="background:#ff6b35;color:#fff;padding:5px 15px;border-radius:15px;font-weight:700">Tier <span id="bpTier">1</span></div></div>
+                <div class="bp-track"><div class="bp-fill" id="bpFill" style="width:0%"></div></div>
+                <div class="bp-rewards" id="bpRewards"></div>
+                <button onclick="upgradeBP()" style="width:100%;padding:12px;background:linear-gradient(90deg,var(--premium),#ff4d9e);border:none;border-radius:10px;color:#fff;font-weight:700;cursor:pointer;margin-top:10px">Upgrade $9.99</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">📜 Quests</div>
+                <div class="panel-content">
+                    <div style="background:rgba(255,215,0,.1);border:1px solid var(--gold);border-radius:10px;padding:12px;margin-bottom:10px">
+                        <div style="color:var(--gold);font-weight:700;margin-bottom:5px">Defeat 5 Monsters</div>
+                        <div style="font-size:.85rem;color:#888;margin-bottom:8px">Progress: <span id="questProgress">0</span>/5</div>
+                        <div style="display:flex;gap:10px;font-size:.8rem"><span style="color:var(--gold)">💰 100</span><span style="color:var(--premium)">💎 20</span></div>
+                    </div>
+                    <button onclick="claimDaily()" style="width:100%;padding:12px;background:linear-gradient(90deg,var(--premium),#ff4d9e);border:none;border-radius:10px;color:#fff;font-weight:700;cursor:pointer">🎁 Daily Reward</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">🎒 Inventory</div>
+                <div class="panel-content">
+                    <div class="inventory-grid">
+                        <div class="inv-slot">⚔️</div>
+                        <div class="inv-slot">🛡️</div>
+                        <div class="inv-slot">🧪<span class="item-count" id="potionCount">3</span></div>
+                        <div class="inv-slot">💰<span class="item-count" id="invGold">100</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="shopModal">
+        <div class="modal">
+            <div class="modal-header"><div class="modal-title">💎 Premium Shop</div><button class="close-btn" onclick="closeShop()">✕</button></div>
+            <div style="display:flex;gap:10px;padding:15px;background:rgba(0,0,0,.2)">
+                <button onclick="showShopTab('gems')" style="padding:10px 20px;background:rgba(255,0,110,.2);border:1px solid var(--premium);border-radius:20px;color:var(--premium);cursor:pointer">💎 Gems</button>
+                <button onclick="showShopTab('items')" style="padding:10px 20px;background:rgba(255,255,255,.05);border:1px solid #444;border-radius:20px;color:#888;cursor:pointer">🛍️ Items</button>
+            </div>
+            <div class="modal-content" id="shopContent"></div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const gameState={player:{name:'',class:'',level:1,xp:0,xpToNext:100,hp:100,maxHp:100,mana:50,maxMana:50,gold:100,gems:50,vip:false,stats:{str:10,def:8,mag:5,spd:7},inventory:{potions:3}},questKills:0,inCombat:false,currentEnemy:null};
+        const classData={warrior:{icon:'⚔️',stats:{str:15,def:12,mag:3,spd:7},hp:120,mana:30},mage:{icon:'🔮',stats:{str:4,def:6,mag:20,spd:8},hp:80,mana:100},rogue:{icon:'🗡️',stats:{str:10,def:8,mag:5,spd:15},hp:90,mana:50},pyromancer:{icon:'🔥',stats:{str:8,def:7,mag:25,spd:6},hp:85,mana:120}};
+        const enemies={goblin:{name:'Goblin',icon:'👹',hp:40,maxHp:40,atk:8,xp:25,gold:10},wolf:{name:'Wolf',icon:'🐺',hp:60,maxHp:60,atk:12,xp:40,gold:15},skeleton:{name:'Skeleton',icon:'💀',hp:50,maxHp:50,atk:10,xp:35,gold:12}};
+        let selectedClass=null;
+
+        function selectClass(el){document.querySelectorAll('.class-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');selectedClass=el.dataset.class}
+        function startGame(){const name=document.getElementById('heroName').value.trim();if(!name||!selectedClass){showToast('Complete all fields!','error');return}const info=classData[selectedClass];Object.assign(gameState.player,{name,class:selectedClass,stats:{...info.stats},maxHp:info.hp,hp:info.hp,maxMana:info.mana,mana:info.mana});document.getElementById('charName').textContent=name;document.getElementById('charClass').textContent=selectedClass.charAt(0).toUpperCase()+selectedClass.slice(1);document.getElementById('charAvatar').textContent=info.icon;document.getElementById('playerSprite').textContent=info.icon;document.getElementById('combatPlayerName').textContent=name;updateStats();updateUI();initBP();document.getElementById('loginScreen').classList.add('hidden');document.getElementById('gameContainer').classList.add('active');showToast('Welcome to Eternal Realms!','success')}
+        function updateStats(){['str','def','mag','spd'].forEach(s=>document.getElementById('stat'+s.charAt(0).toUpperCase()+s.slice(1)).textContent=gameState.player.stats[s])}
+        function updateUI(){const p=gameState.player;document.getElementById('headerGold').textContent=p.gold;document.getElementById('headerGems').textContent=p.gems;document.getElementById('playerLevel').textContent='Lvl '+p.level;document.getElementById('xpText').textContent=p.xp+'/'+p.xpToNext;document.getElementById('xpBar').style.width=(p.xp/p.xpToNext*100)+'%';document.getElementById('hpText').textContent=p.hp+'/'+p.maxHp;document.getElementById('hpBar').style.width=(p.hp/p.maxHp*100)+'%';document.getElementById('manaText').textContent=p.mana+'/'+p.maxMana;document.getElementById('manaBar').style.width=(p.mana/p.maxMana*100)+'%';document.getElementById('potionCount').textContent=p.inventory.potions;document.getElementById('invGold').textContent=p.gold;document.getElementById('questProgress').textContent=gameState.questKills}
+        function showSection(sec){document.querySelectorAll('.content-section').forEach(s=>s.classList.remove('active'));document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));event.target.classList.add('active');document.getElementById(sec+'Section').classList.add('active')}
+        function startCombat(type){gameState.inCombat=true;gameState.currentEnemy={...enemies[type]};const e=gameState.currentEnemy;document.getElementById('combatArea').classList.add('active');document.getElementById('enemyName').textContent=e.name;document.getElementById('enemySprite').textContent=e.icon;updateCombat();addLog('Battle started!')}
+        function updateCombat(){const p=gameState.player,e=gameState.currentEnemy;document.getElementById('combatPlayerHP').style.width=(p.hp/p.maxHp*100)+'%';document.getElementById('enemyHP').style.width=(e.hp/e.maxHp*100)+'%'}
+        function addLog(txt){const log=document.getElementById('combatLog'),entry=document.createElement('div');entry.style.cssText='margin-bottom:5px;padding:5px;border-left:3px solid #444;padding-left:10px';entry.textContent='> '+txt;log.appendChild(entry);log.scrollTop=log.scrollHeight}
+        function combatAttack(){if(!gameState.inCombat)return;const p=gameState.player,e=gameState.currentEnemy,dmg=Math.floor(p.stats.str*(.8+Math.random()*.4));e.hp-=dmg;addLog('You deal '+dmg+' damage!');if(e.hp<=0)win();else setTimeout(enemyTurn,600);updateCombat()}
+        function combatMagic(){const p=gameState.player;if(p.mana<10){addLog('No mana!');return}p.mana-=10;const dmg=Math.floor(p.stats.mag*(1.2+Math.random()*.6));gameState.currentEnemy.hp-=dmg;addLog('Spell deals '+dmg+'!');updateUI();if(gameState.currentEnemy.hp<=0)win();else setTimeout(enemyTurn,600);updateCombat()}
+        function combatHeal(){if(gameState.player.inventory.potions<=0){addLog('No potions!');return}gameState.player.inventory.potions--;const heal=50;gameState.player.hp=Math.min(gameState.player.hp+heal,gameState.player.maxHp);addLog('Healed '+heal+' HP');updateUI();setTimeout(enemyTurn,600);updateCombat()}
+        function enemyTurn(){const p=gameState.player,e=gameState.currentEnemy,dmg=Math.max(1,Math.floor(e.atk*(.7+Math.random()*.6)-p.stats.def*.3));p.hp-=dmg;addLog(e.name+' deals '+dmg+'!');if(p.hp<=0){showToast('You died! HP restored.','error');p.hp=p.maxHp;endCombat()}updateCombat();updateUI()}
+        function win(){const e=gameState.currentEnemy,p=gameState.player;let xp=e.xp,gold=e.gold;if(p.vip){xp*=2;gold*=2}p.xp+=xp;p.gold+=gold;gameState.questKills++;addLog('Victory! +'+xp+' XP, +'+gold+' Gold');if(p.xp>=p.xpToNext)levelUp();updateBP();updateUI();setTimeout(endCombat,1500)}
+        function levelUp(){const p=gameState.player;p.level++;p.xp-=p.xpToNext;p.xpToNext=Math.floor(p.xpToNext*1.5);p.maxHp+=20;p.hp=p.maxHp;p.maxMana+=10;p.mana=p.maxMana;p.stats.str+=2;p.stats.def++;updateStats();showToast('Level Up! Now level '+p.level,'success')}
+        function endCombat(){gameState.inCombat=false;gameState.currentEnemy=null;document.getElementById('combatArea').classList.remove('active');document.getElementById('combatLog').innerHTML=''}
+        function initBP(){const rewards=document.getElementById('bpRewards'),icons=['💰','💎','🧪','⚔️','🛡️','👑','🐉','🔥'];for(let i=1;i<=8;i++){const r=document.createElement('div');r.className='bp-reward'+(i===1?' current':'');r.innerHTML='<div style="font-size:.75rem;color:#888;margin-bottom:5px">Tier '+i+'</div><div style="font-size:1.5rem">'+icons[i-1]+'</div>';rewards.appendChild(r)}}
+        function updateBP(){const progress=(gameState.player.xp%100);document.getElementById('bpFill').style.width=progress+'%';document.getElementById('bpTier').textContent=Math.floor(gameState.player.xp/100)+1}
+        function donate(){if(gameState.player.gold>=100){gameState.player.gold-=100;updateUI();showToast('Donated 100g! +10 Guild XP','success')}else showToast('Need 100 gold!','error')}
+        function raid(){showToast('Guild Raid starts in 5 min!','success')}
+        function shop(){openShop()}
+        function claimDaily(){const reward=gameState.player.vip?200:50;gameState.player.gems+=reward;updateUI();showToast('Daily reward: +'+reward+' Gems!','success')}
+        function openShop(){document.getElementById('shopModal').classList.add('active');showShopTab('gems')}
+        function closeShop(){document.getElementById('shopModal').classList.remove('active')}
+        function showShopTab(tab){const content=document.getElementById('shopContent');if(tab==='gems'){content.innerHTML='<div class="gem-packages"><div class="gem-package" onclick="buyGems(100,.99)"><div class="gem-amount">💎 100</div><div class="gem-price">$0.99</div></div><div class="gem-package" onclick="buyGems(550,4.99)"><div class="gem-amount">💎 550</div><div class="gem-bonus">+50 Bonus</div><div class="gem-price">$4.99</div></div><div class="gem-package" onclick="buyGems(1200,9.99)"><div class="gem-amount">💎 1,200</div><div class="gem-bonus">+200 Bonus</div><div class="gem-price">$9.99</div></div><div class="gem-package" onclick="buyGems(2500,19.99)"><div class="gem-amount">💎 2,500</div><div class="gem-bonus">+500 Bonus</div><div class="gem-price">$19.99</div></div></div>'}else{content.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;padding:20px"><div style="background:rgba(0,0,0,.3);border:2px solid var(--premium);border-radius:15px;padding:20px;text-align:center;cursor:pointer" onclick="buyItem(\'sword\',500)"><div style="font-size:2.5rem;margin-bottom:10px">⚔️</div><div style="color:var(--gold);font-weight:700">Legendary Sword</div><div style="color:var(--premium);margin-top:10px">💎 500</div></div></div>'}}
+        function buyGems(amt,price){showToast('Processing $'+price+'...','success');setTimeout(()=>{gameState.player.gems+=amt;updateUI();showToast('+'+amt+' Gems added!','success')},1500)}
+        function buyItem(item,cost){if(gameState.player.gems<cost){showToast('Not enough gems!','error');return}gameState.player.gems-=cost;if(item==='sword'){gameState.player.stats.str+=20;updateStats()}updateUI();showToast('Item purchased!','success')}
+        function upgradeBP(){showToast('Processing...','success');setTimeout(()=>{showToast('Battle Pass upgraded!','success');closeShop()},1500)}
+        function showToast(msg,type){const container=document.getElementById('toastContainer'),toast=document.createElement('div');toast.className='toast';toast.textContent=msg;if(type==='error')toast.style.borderLeftColor='#ff006e';container.appendChild(toast);setTimeout(()=>toast.remove(),3000)}
+        updateUI();initBP();
+    </script>
+</body>
+</html>
